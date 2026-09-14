@@ -47,15 +47,3 @@ because Biopython requires that column. Native files, atom order, coordinates,
 and confidence arrays remain unchanged. Alternate conformations without
 occupancy are rejected. Optional interface scoring uses the same compatible
 representation; unit occupancy is not an experimental measurement.
-
-## Scope for review
-
-A focused evaluator PR consists of the optional backend, CLI dispatch,
-installation validation, configuration example, summary recognition, tests,
-and this protocol documentation. It does not change AF3 or design calculations.
-Full-atom selected-frame capture/export is independently useful and can be
-reviewed as a follow-up change; it is not required to run native reevaluation.
-
-The principal scientific protocol differences are the target-MSA source and
-absence of target templates. Comparisons between predictors must disclose these
-differences; integration tests alone cannot establish scientific equivalence.
