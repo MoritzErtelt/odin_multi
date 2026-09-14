@@ -8,17 +8,121 @@ packages are required in the ODIN design environment.
 
 ## Installation and configuration
 
-Copy [`settings_reevaluation/openfold3.example.json`](../settings_reevaluation/openfold3.example.json) and configure the executable,
-its environment Python, a staged checkpoint, runtime cache, and target-MSA
-cache. Paths are relative to the configuration file unless absolute. The
-adapter records the installed version/source and checkpoint checksum. Do not
-mix software or checkpoints under an existing named evaluation.
+OpenFold3 runs in a separate Python environment. Keep the existing ODIN
+environment for design, selection, and summary generation.
 
-Validate the configured installation before preprocessing:
+### 1. Install native OpenFold3
+
+The adapter was tested with Python 3.12 and OpenFold3 0.4.3 at commit
+`0bb17be5199846e806b6347b6e17c6249c88ff1b`. Use this revision for reproducible
+installation.
 
 ```bash
-python validate_install.py --openfold3-config /path/to/openfold3.local.json
+conda create -n odin-openfold3 python=3.12 pip -y
+conda activate odin-openfold3
+
+python -m pip install torch==2.7.1 \
+  --index-url https://download.pytorch.org/whl/cu128
+
+python -m pip install \
+  "openfold3 @ git+https://github.com/aqlaboratory/openfold-3.git@0bb17be5199846e806b6347b6e17c6249c88ff1b" \
+  "numpy<2" "pandas<3"
 ```
+
+This example uses the CUDA 12.8 PyTorch build. The NVIDIA driver must support
+that runtime. For other hardware or CUDA environments, follow the
+[upstream installation instructions](https://openfold-3.readthedocs.io/en/latest/Installation.html),
+while retaining the OpenFold3 revision above.
+
+Check the installation:
+
+```bash
+python -m pip check
+run_openfold predict --help
+run_openfold align-msa-server --help
+
+python -c \
+  "import torch; print('PyTorch:', torch.__version__); print('CUDA available:', torch.cuda.is_available())"
+```
+
+Run the CUDA check inside a GPU allocation. GPU memory requirements depend on
+the total input length and inference settings.
+
+### 2. Download compatible model parameters
+
+Run the upstream setup command from the OpenFold3 environment:
+
+```bash
+setup_openfold
+```
+
+Select the Preview-2 checkpoint, `of3-p2-155k.pt`, and record its absolute path.
+OpenFold3 0.4.3 requires compatible parameters; the current upstream default
+checkpoint may target a newer release. See the
+[parameter compatibility documentation](https://openfold-3.readthedocs.io/en/latest/parameters_reference.html).
+
+Complete parameter downloads before starting ODIN evaluation. ODIN requires
+an existing checkpoint file and records its SHA-256 checksum.
+
+### 3. Configure ODIN
+
+Record the executable paths before leaving the OpenFold3 environment:
+
+```bash
+command -v run_openfold
+command -v python
+```
+
+Return to the ODIN environment and repository directory. Copy the
+[example configuration](../settings_reevaluation/openfold3.example.json):
+
+```bash
+cp settings_reevaluation/openfold3.example.json \
+   settings_reevaluation/openfold3.local.json
+```
+
+Edit the local configuration:
+
+```json
+{
+  "executable": "/absolute/path/to/odin-openfold3/bin/run_openfold",
+  "python": "/absolute/path/to/odin-openfold3/bin/python",
+  "checkpoint": "/absolute/path/to/models/of3-p2-155k.pt",
+  "cache_dir": "/absolute/path/to/openfold3/cache",
+  "target_cache_dir": "/absolute/path/to/odin_target_msas",
+  "seeds": [1],
+  "num_diffusion_samples": 5,
+  "timeout_seconds": 21600,
+  "msa_server_url": "https://api.colabfold.com",
+  "runner_settings": {},
+  "interface_metrics": false,
+  "interface_relax": true
+}
+```
+
+`executable` and `python` must refer to the same OpenFold3 environment.
+`cache_dir` stores native runtime cache data; `target_cache_dir` stores reusable
+fixed-target alignments. Both directories must be writable. Relative paths
+resolve against the configuration file's directory.
+
+Target preprocessing requires access to the configured ColabFold service and
+sends fixed target sequences to that service. Evaluation uses the cached
+alignments. Designed sequences remain query-only, and templates are disabled.
+
+### 4. Validate the integration
+
+Run from the ODIN environment:
+
+```bash
+python validate_install.py \
+  --openfold3-config settings_reevaluation/openfold3.local.json
+```
+
+This runs ODIN's installation checks and checks the configured OpenFold3
+executable, package metadata, and checkpoint file. It does not run an OpenFold3
+prediction or establish that a particular input fits GPU memory.
+
+Proceed with target preprocessing and reevaluation below.
 
 ## Prepare targets and reevaluate
 
