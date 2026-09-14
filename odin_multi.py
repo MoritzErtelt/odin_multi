@@ -42,7 +42,7 @@ SELECTION_METHODS = (
     "best_i_pae",
     "best_clipped_i_pae_ratio",
 )
-EVALUATORS = ("af2", "af3")
+EVALUATORS = ("af2", "af3", "openfold3")
 DEFAULT_EVALUATOR = "af3"
 
 
@@ -1305,6 +1305,8 @@ def _evaluator_functions(name: str) -> tuple[Any, Any]:
         from evaluators.af2 import collect_evaluation, run_evaluation
     elif name == "af3":
         from evaluators.af3 import collect_evaluation, run_evaluation
+    elif name == "openfold3":
+        from evaluators.openfold3 import collect_evaluation, run_evaluation
     else:
         raise ValueError(f"Unknown evaluator {name!r}")
     return run_evaluation, collect_evaluation
@@ -1364,7 +1366,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     preprocess_af3.add_argument("--evaluator-config", required=True, type=Path)
 
-    evaluate = commands.add_parser("evaluate", help="Run AF2 or AF3 reevaluation")
+    preprocess_of3 = commands.add_parser("preprocess-openfold3", help="Cache native OpenFold3 target MSAs")
+    preprocess_of3.add_argument("--settings", "-s", action="append", required=True, type=Path)
+    preprocess_of3.add_argument("--evaluator-config", required=True, type=Path)
+
+    evaluate = commands.add_parser("evaluate", help="Run independent sequence reevaluation")
     evaluate.add_argument("--run-dir", required=True, type=Path)
     evaluate.add_argument("--selection", required=True)
     evaluate.add_argument("--evaluation-name", required=True)
@@ -1426,6 +1432,9 @@ def main(argv: list[str] | None = None) -> int:
                     args.settings, config_path=args.evaluator_config
                 ),
             )
+        elif args.command == "preprocess-openfold3":
+            from evaluators.openfold3 import preprocess_targets
+            _emit(args.command, preprocess_targets(args.settings, config_path=args.evaluator_config))
         elif args.command == "evaluate":
             run_evaluation, _ = _evaluator_functions(args.evaluator)
 

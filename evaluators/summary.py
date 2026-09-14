@@ -331,6 +331,8 @@ def _expected_replicates(metadata: dict[str, Any]) -> int:
     if evaluator == "af2":
         models = config.get("models") or [0]
         return max(1, len(models) * len(seeds))
+    if evaluator == "openfold3":
+        return len(seeds) * int(config["num_diffusion_samples"])
     flags = config.get("extra_flags") or {}
     samples = _integer(flags.get("num_diffusion_samples")) or 5
     return max(1, len(seeds) * samples)
@@ -364,7 +366,7 @@ def _evaluation_case(
     evaluator = str(metadata.get("evaluator") or root.parent.name)
     evaluation_name = str(metadata.get("evaluation_name") or root.name)
     selection_name = str(metadata.get("selection_name") or "")
-    if evaluator not in {"af2", "af3"}:
+    if evaluator not in {"af2", "af3", "openfold3"}:
         raise ValueError(f"Unsupported evaluator in {root}: {evaluator!r}")
     if not selection_name:
         raise ValueError(f"Evaluation metadata lacks selection_name: {root}")
@@ -455,7 +457,7 @@ def _discover_evaluations(
     return sorted(
         path.parent
         for path in layout.evaluations.glob("*/*/evaluation.json")
-        if path.parent.parent.name in {"af2", "af3"}
+        if path.parent.parent.name in {"af2", "af3", "openfold3"}
     )
 
 
@@ -468,6 +470,8 @@ def _collect_evaluations(run_dir: Path, roots: list[Path]) -> None:
             from .af2 import collect_evaluation
         elif evaluator == "af3":
             from .af3 import collect_evaluation
+        elif evaluator == "openfold3":
+            from .openfold3 import collect_evaluation
         else:
             raise ValueError(f"Unsupported evaluator {evaluator!r}")
         collect_evaluation(run_dir, name)

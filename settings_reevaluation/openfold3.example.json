@@ -1,0 +1,14 @@
+{
+  "executable": "/path/to/openfold3/bin/run_openfold",
+  "python": "/path/to/openfold3/bin/python",
+  "checkpoint": "/path/to/models/of3.pt",
+  "cache_dir": "/path/to/openfold3/cache",
+  "target_cache_dir": "/path/to/odin_target_msas",
+  "seeds": [1],
+  "num_diffusion_samples": 5,
+  "timeout_seconds": 21600,
+  "msa_server_url": "https://api.colabfold.com",
+  "runner_settings": {},
+  "interface_metrics": false,
+  "interface_relax": true
+}

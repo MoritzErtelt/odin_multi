@@ -19,6 +19,7 @@ off-target counter-selection, or combinations of the two.
 - [Run the cross-reactivity example](#quick-start-cross-reactivity)
 - [Configure targets, losses, and optimization](docs/configuration.md)
 - [Design, select, and reevaluate](#design-trajectories)
+- [Configure native OpenFold3 reevaluation](docs/openfold3.md)
 - [Interpret summaries, rankings, and figures](docs/reporting.md)
 - [Understand the run directory](#outputs)
 - [Troubleshoot common failures](#troubleshooting)
@@ -479,6 +480,15 @@ scored together as one target group. Higher values are better; summaries mark
 can be backfilled from their saved confidence JSON during summarization.
 Existing AF2 results require reevaluation because their PAE matrices were not
 previously retained.
+
+## Additional OpenFold3 reevaluation
+
+Native OpenFold3 is an optional external evaluator selected with
+`--evaluator openfold3`. AF3 remains the default. See
+[OpenFold3 setup and reevaluation](docs/openfold3.md) for installation, target
+preprocessing, configuration, and worker execution. The
+[AF3 comparison](OPENFOLD3_COMPATIBILITY.md) records the shared evaluator
+lifecycle and the differences in target MSAs and templates.
 
 ## Summarize a run
 

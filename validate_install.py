@@ -265,7 +265,7 @@ def check_af3(reporter: Reporter, config_path: Path) -> None:
 
 def run_validation(
     *, allow_cpu: bool = False, af3_config: Path | None = None,
-    repository: Path | None = None,
+    repository: Path | None = None, openfold3_config: Path | None = None,
 ) -> int:
     root = (repository or REPOSITORY_ROOT).resolve()
     reporter = Reporter()
@@ -278,6 +278,13 @@ def run_validation(
     check_jax_gpu(reporter, imported, allow_cpu)
     if af3_config is not None:
         check_af3(reporter, af3_config)
+    if openfold3_config is not None:
+        try:
+            from evaluators.openfold3 import normalize_config
+            config = normalize_config(openfold3_config)
+            reporter.passed("OpenFold3", f"Native executable and checkpoint validated: {config['software']['version']}")
+        except Exception as error:
+            reporter.failed("OpenFold3", str(error))
     print(
         f"Validation complete: {reporter.failures} failure(s), "
         f"{reporter.warnings} warning(s)."
@@ -299,6 +306,7 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         help="Also validate an AlphaFold 3 evaluator configuration",
     )
+    parser.add_argument("--openfold3-config", type=Path, help="Validate native OpenFold3 executable and checkpoint")
     return parser
 
 
@@ -307,6 +315,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     return run_validation(
         allow_cpu=args.allow_cpu,
         af3_config=args.af3_config,
+        openfold3_config=args.openfold3_config,
     )
 
 
